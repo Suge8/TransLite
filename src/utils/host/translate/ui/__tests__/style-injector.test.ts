@@ -6,13 +6,13 @@ async function loadStyleInjector() {
   vi.resetModules()
 
   vi.doMock("@/assets/styles/custom-translation-node.css?raw", () => ({
-    default: "@import '@/assets/styles/host-theme.css';\n[data-read-frog-custom-translation-style='blur'] { opacity: 0.75; }",
+    default: "@import '@/assets/styles/host-theme.css';\n[data-tl-custom-translation-style='blur'] { opacity: 0.75; }",
   }))
   vi.doMock("@/assets/styles/host-theme.css?raw", () => ({
-    default: ":root { --read-frog-primary: oklch(0.205 0 0); --read-frog-brand: oklch(76.034% 0.12361 82.191); }",
+    default: ":root { --tl-primary: oklch(0.205 0 0); --tl-brand: oklch(56% 0.12 153); }",
   }))
   vi.doMock("@/assets/styles/translation-node-preset.css?raw", () => ({
-    default: ".read-frog-translated-content-wrapper { display: inline; }",
+    default: ".tl-translated-content-wrapper { display: inline; }",
   }))
 
   return import("../style-injector")
@@ -34,9 +34,9 @@ describe("style-injector", () => {
 
     ensurePresetStyles(document)
 
-    const presetStyle = document.head.querySelector<HTMLStyleElement>("#read-frog-preset-styles")
+    const presetStyle = document.head.querySelector<HTMLStyleElement>("#tl-preset-styles")
     expect(presetStyle).not.toBeNull()
-    expect(presetStyle?.textContent).toContain(".read-frog-translated-content-wrapper")
+    expect(presetStyle?.textContent).toContain(".tl-translated-content-wrapper")
     expect(presetStyle?.textContent).toContain(":root")
     expect(presetStyle?.textContent).not.toContain(":host")
   })
@@ -53,8 +53,8 @@ describe("style-injector", () => {
     ensurePresetStyles(document)
 
     expect(document.adoptedStyleSheets).toHaveLength(1)
-    expect(document.adoptedStyleSheets[0]?.cssRules[0]?.cssText).toContain("--read-frog-brand")
-    expect(document.head.querySelector("#read-frog-preset-styles")).toBeNull()
+    expect(document.adoptedStyleSheets[0]?.cssRules[0]?.cssText).toContain("--tl-brand")
+    expect(document.head.querySelector("#tl-preset-styles")).toBeNull()
   })
 
   it("falls back to style elements when adoptedStyleSheets assignment throws", async () => {
@@ -73,7 +73,7 @@ describe("style-injector", () => {
 
     ensurePresetStyles(document)
 
-    const presetStyle = document.head.querySelector<HTMLStyleElement>("#read-frog-preset-styles")
+    const presetStyle = document.head.querySelector<HTMLStyleElement>("#tl-preset-styles")
     expect(presetStyle).not.toBeNull()
     expect(adoptedStyleSheets).toHaveLength(0)
   })
@@ -90,39 +90,10 @@ describe("style-injector", () => {
 
     ensurePresetStyles(shadow)
 
-    const presetStyle = shadow.querySelector<HTMLStyleElement>("#read-frog-preset-styles")
+    const presetStyle = shadow.querySelector<HTMLStyleElement>("#tl-preset-styles")
     expect(presetStyle).not.toBeNull()
-    expect(presetStyle?.textContent).toContain(".read-frog-translated-content-wrapper")
+    expect(presetStyle?.textContent).toContain(".tl-translated-content-wrapper")
     expect(presetStyle?.textContent).toContain(":host")
     expect(presetStyle?.textContent).not.toContain(":root {")
-  })
-
-  it("ensures preset styles exist before custom document CSS", async () => {
-    const { ensureCustomCSS } = await loadStyleInjector()
-
-    await ensureCustomCSS(document, ".custom-translation-style { color: red; }")
-
-    const presetStyle = document.head.querySelector<HTMLStyleElement>("#read-frog-preset-styles")
-    const customStyle = document.head.querySelector<HTMLStyleElement>("#read-frog-custom-styles")
-
-    expect(presetStyle).not.toBeNull()
-    expect(customStyle).not.toBeNull()
-    expect(customStyle?.textContent).toContain(".custom-translation-style")
-  })
-
-  it("uses adoptedStyleSheets for document custom CSS when available", async () => {
-    const { ensureCustomCSS } = await loadStyleInjector()
-
-    Object.defineProperty(document, "adoptedStyleSheets", {
-      configurable: true,
-      value: [],
-      writable: true,
-    })
-
-    await ensureCustomCSS(document, ".custom-translation-style { color: blue; }")
-
-    expect(document.adoptedStyleSheets).toHaveLength(2)
-    expect(Array.from(document.adoptedStyleSheets[1]?.cssRules ?? [], rule => rule.cssText).join("\n")).toContain("color: blue")
-    expect(document.head.querySelector("#read-frog-custom-styles")).toBeNull()
   })
 })

@@ -7,7 +7,7 @@ import { logger } from "@/utils/logger"
 import { getSubtitlesSegmentationPrompt } from "@/utils/prompts/subtitles-segmentation"
 import { getModelById } from "@/utils/providers/model"
 import { resolveModelId } from "@/utils/providers/model-id"
-import { getProviderOptionsWithOverride } from "@/utils/providers/options"
+import { getProviderOptions } from "@/utils/providers/options"
 import { ensureInitializedConfig } from "./config"
 
 const VTT_CODE_BLOCK_RE = /```vtt\n?/g
@@ -73,9 +73,9 @@ export async function runAiSegmentSubtitles(data: AiSegmentSubtitlesData): Promi
     return cached.result
   }
 
-  const { model: providerModel, provider, providerOptions: userProviderOptions, temperature } = providerConfig
+  const { model: providerModel, provider, temperature } = providerConfig
   const modelName = resolveModelId(providerModel)
-  const providerOptions = getProviderOptionsWithOverride(modelName ?? "", provider, userProviderOptions)
+  const providerOptions = getProviderOptions(modelName ?? "", provider)
   const model = await getModelById(providerId)
 
   const { systemPrompt, prompt } = getSubtitlesSegmentationPrompt(jsonContent)

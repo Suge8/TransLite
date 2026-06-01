@@ -27,9 +27,9 @@ export function GradientBackground({ children, className }: GradientBackgroundPr
       className={cn("w-full py-8 flex items-center justify-center rounded-xl my-8", className)}
       style={{
         backgroundImage: [
-          "radial-gradient(circle at 70% 10%, rgba(7 240 139 / 0.15), transparent)",
-          "radial-gradient(circle at 0% 80%, rgba(233 246 54 / 0.1), transparent)",
-          "radial-gradient(circle at 50% 50%, rgba(235 183 51 / 0.08), transparent)",
+          "radial-gradient(circle at 72% 12%, rgba(139 92 246 / 0.22), transparent 60%)",
+          "radial-gradient(circle at 5% 85%, rgba(99 102 241 / 0.18), transparent 55%)",
+          "radial-gradient(circle at 55% 55%, rgba(217 70 239 / 0.12), transparent 60%)",
           `url("data:image/svg+xml,${encodeURIComponent(svg)}")`,
         ].join(", "),
       }}

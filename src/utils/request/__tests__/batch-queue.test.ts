@@ -48,10 +48,10 @@ const sampleLangConfig: Config["language"] = {
 const sampleProviderConfig: ProviderConfig = {
   id: "test-provider",
   name: "Test Provider",
-  provider: "openai",
+  provider: "deepseek",
   enabled: true,
   apiKey: "test-key",
-  model: { model: "gpt-4o-mini", isCustomModel: false, customModel: null },
+  model: { model: "deepseek-v4-flash", isCustomModel: false, customModel: null },
 }
 
 interface TranslateBatchData {

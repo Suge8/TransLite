@@ -1,14 +1,9 @@
-import path from "node:path"
 import process from "node:process"
 import { defineConfig } from "wxt"
 import { z } from "zod"
-import { createExtensionClientEnvSchema, isLocalPackagesEnabled, resolveExtensionEnv } from "./src/env/shared"
+import { createExtensionClientEnvSchema, resolveExtensionEnv } from "./src/env/shared"
 
 const WXT_API_KEY_PATTERN = /^WXT_.*API_KEY/
-const ALLOWED_BUNDLED_API_KEYS = new Set([
-  "WXT_POSTHOG_API_KEY",
-])
-const useLocalPackages = isLocalPackagesEnabled(process.env)
 const shouldSkipEnvValidation = process.env.WXT_SKIP_ENV_VALIDATION === "true"
 
 // See https://wxt.dev/api/config.html
@@ -17,13 +12,6 @@ export default defineConfig({
   imports: false,
   modules: ["@wxt-dev/module-react", "@wxt-dev/i18n/module"],
   manifestVersion: 3,
-  // WXT top level alias - will be automatically synced to tsconfig.json paths and Vite alias
-  alias: useLocalPackages
-    ? {
-        "@read-frog/definitions": path.resolve(__dirname, "../read-frog-monorepo/packages/definitions/src"),
-        "@read-frog/api-contract": path.resolve(__dirname, "../read-frog-monorepo/packages/api-contract/src"),
-      }
-    : {},
   manifest: ({ mode, browser }) => ({
     name: "__MSG_extName__",
     description: "__MSG_extDescription__",
@@ -36,12 +24,8 @@ export default defineConfig({
       "storage",
       "tabs",
       "alarms",
-      "cookies",
-      "contextMenus",
-      "identity",
       "scripting",
       "webNavigation",
-      ...(browser !== "firefox" ? ["offscreen", "sidePanel"] : []),
     ],
     host_permissions: [
       "*://*/*", // Required for scripting.executeScript in any frame
@@ -100,7 +84,6 @@ export default defineConfig({
 
                 const apiKeyVars = Object.keys(process.env)
                   .filter(key => WXT_API_KEY_PATTERN.test(key))
-                  .filter(key => !ALLOWED_BUNDLED_API_KEYS.has(key))
 
                 if (apiKeyVars.length > 0) {
                   throw new Error(

@@ -72,7 +72,7 @@ await chrome.runtime.sendMessage({
 
 ```js
 await page.waitForFunction(
-  () => document.querySelectorAll('.read-frog-spinner').length >= 4,
+  () => document.querySelectorAll('.tl-spinner').length >= 4,
   null,
   { timeout: 45000 },
 );
@@ -91,14 +91,14 @@ await page.waitForFunction(
 - A stitched comparison board is a comparison graphic, not a raw screenshot.
 - If the element is tiny and hard to see in a full-page shot, keep the raw shot and add a labeled crop as supplemental evidence.
 
-## Common signals for read-frog
+## Common signals for translite
 
 Loading-time signals:
-- `.read-frog-spinner`
+- `.tl-spinner`
 - inline spinner style strings
 
 Completion-time signals:
-- `.read-frog-translated-content-wrapper`
+- `.tl-translated-content-wrapper`
 - Chinese characters in translated text
 - translated page title
 

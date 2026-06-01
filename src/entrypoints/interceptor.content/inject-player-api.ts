@@ -39,6 +39,12 @@ interface SelectedTrackSnapshot {
   vssId: string | null
 }
 
+declare global {
+  interface Window {
+    __TRANSLITE_INTERCEPTOR_INJECTED__?: boolean
+  }
+}
+
 function findYoutubePlayer(): YouTubePlayer | null {
   return document.querySelector(
     ".html5-video-player.playing-mode, .html5-video-player.paused-mode",
@@ -46,10 +52,10 @@ function findYoutubePlayer(): YouTubePlayer | null {
 }
 
 export function injectPlayerApi(): void {
-  if ((window as any).__READ_FROG_INTERCEPTOR_INJECTED__) {
+  if (window.__TRANSLITE_INTERCEPTOR_INJECTED__) {
     return
   }
-  ;(window as any).__READ_FROG_INTERCEPTOR_INJECTED__ = true
+  window.__TRANSLITE_INTERCEPTOR_INJECTED__ = true
 
   setupTimedtextObserver()
   window.addEventListener("message", handleMessage)

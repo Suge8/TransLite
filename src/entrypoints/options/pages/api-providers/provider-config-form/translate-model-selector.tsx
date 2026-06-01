@@ -7,9 +7,7 @@ import { Checkbox } from "@/components/ui/base-ui/checkbox"
 import { SelectContent, SelectGroup, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/base-ui/select"
 import { isCustomLLMProviderConfig, isLLMProviderConfig, LLM_PROVIDER_MODELS } from "@/types/config/provider"
 import { providerConfigAtom, updateLLMProviderConfig } from "@/utils/atoms/provider"
-import { resolveModelId } from "@/utils/providers/model-id"
 import { ModelSuggestionButton } from "./components/model-suggestion-button"
-import { ProviderOptionsRecommendationTrigger } from "./components/provider-options-recommendation-trigger"
 import { withForm } from "./form"
 
 export const TranslateModelSelector = withForm({
@@ -20,22 +18,7 @@ export const TranslateModelSelector = withForm({
     if (!isLLMProviderConfig(providerConfig))
       return <></>
 
-    const modelId = resolveModelId(providerConfig.model)
     const { isCustomModel, customModel, model } = providerConfig.model
-
-    const applyRecommendedProviderOptions = (options: Record<string, unknown>) => {
-      form.setFieldValue("providerOptions", options)
-      void form.handleSubmit()
-    }
-
-    const recommendationTrigger = (
-      <ProviderOptionsRecommendationTrigger
-        providerId={providerConfig.id}
-        modelId={modelId}
-        currentProviderOptions={providerConfig.providerOptions}
-        onApply={applyRecommendedProviderOptions}
-      />
-    )
 
     return (
       <div>
@@ -48,7 +31,6 @@ export const TranslateModelSelector = withForm({
                     label={i18n.t("options.general.translationConfig.model.title")}
                     labelExtra={(
                       <div className="flex items-center gap-2">
-                        {recommendationTrigger}
                         {isCustomLLMProviderConfig(providerConfig) && (
                           <ModelSuggestionButton
                             baseURL={providerConfig.baseURL}
@@ -72,7 +54,6 @@ export const TranslateModelSelector = withForm({
                   <field.SelectFieldAutoSave
                     formForSubmit={form}
                     label={i18n.t("options.general.translationConfig.model.title")}
-                    labelExtra={recommendationTrigger}
                   >
                     <SelectTrigger className="w-full">
                       <SelectValue placeholder={i18n.t("options.apiProviders.form.models.translate.placeholder")} />

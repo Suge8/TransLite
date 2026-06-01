@@ -16,7 +16,7 @@ import { ConfigCard } from "../../components/config-card"
 
 export function TranslationMode() {
   return (
-    <ConfigCard id="translation-mode" title={i18n.t("options.translation.translationMode.title")} description={i18n.t("options.translation.translationMode.description")}>
+    <ConfigCard id="translation-mode" inline title={i18n.t("options.translation.translationMode.title")}>
       <TranslationModeSelector />
     </ConfigCard>
   )
@@ -36,26 +36,24 @@ function TranslationModeSelector() {
   }
 
   return (
-    <div className="w-full flex justify-start md:justify-end">
-      <Select
-        value={currentMode}
-        onValueChange={handleModeChange}
-      >
-        <SelectTrigger className="w-40">
-          <SelectValue render={<span />}>
-            {i18n.t(`options.translation.translationMode.mode.${currentMode}`)}
-          </SelectValue>
-        </SelectTrigger>
-        <SelectContent>
-          <SelectGroup>
-            {TRANSLATION_MODES.map(mode => (
-              <SelectItem key={mode} value={mode}>
-                {i18n.t(`options.translation.translationMode.mode.${mode}`)}
-              </SelectItem>
-            ))}
-          </SelectGroup>
-        </SelectContent>
-      </Select>
-    </div>
+    <Select
+      value={currentMode}
+      onValueChange={handleModeChange}
+    >
+      <SelectTrigger className="w-44">
+        <SelectValue render={<span />}>
+          {i18n.t(`options.translation.translationMode.mode.${currentMode}`)}
+        </SelectValue>
+      </SelectTrigger>
+      <SelectContent>
+        <SelectGroup>
+          {TRANSLATION_MODES.map(mode => (
+            <SelectItem key={mode} value={mode}>
+              {i18n.t(`options.translation.translationMode.mode.${mode}`)}
+            </SelectItem>
+          ))}
+        </SelectGroup>
+      </SelectContent>
+    </Select>
   )
 }

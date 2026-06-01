@@ -1,11 +1,6 @@
-import type { FeatureUsageContext } from "@/types/analytics"
 import type { Config } from "@/types/config/config"
-import { ANALYTICS_FEATURE, ANALYTICS_SURFACE } from "@/types/analytics"
-import { isLLMProviderConfig } from "@/types/config/provider"
-import { createFeatureUsageContext, trackFeatureUsed } from "@/utils/analytics"
 import { getLocalConfig } from "@/utils/config/storage"
 import { CONTENT_WRAPPER_CLASS } from "@/utils/constants/dom-labels"
-import { resolveProviderConfig } from "@/utils/constants/feature-providers"
 import { getRandomUUID } from "@/utils/crypto-polyfill"
 import { hasNoWalkAncestor, isDontWalkIntoAndDontTranslateAsChildElement, isDontWalkIntoButTranslateAsChildElement, isHTMLElement } from "@/utils/host/dom/filter"
 import { deepQueryTopLevelSelector } from "@/utils/host/dom/find"
@@ -13,7 +8,6 @@ import { walkAndLabelElement } from "@/utils/host/dom/traversal"
 import { removeAllTranslatedWrapperNodes, translateWalkedElement } from "@/utils/host/translate/node-manipulation"
 import { validateTranslationConfigAndToast } from "@/utils/host/translate/translate-text"
 import { translateTextForPageTitle } from "@/utils/host/translate/translate-variants"
-import { getOrCreateWebPageContext } from "@/utils/host/translate/webpage-context"
 import { logger } from "@/utils/logger"
 import { sendMessage } from "@/utils/message"
 
@@ -31,7 +25,7 @@ interface IPageTranslationManager {
    * Starts the automatic page translation functionality
    * Registers observers, touch triggers and set storage
    */
-  start: (analyticsContext?: FeatureUsageContext) => Promise<void>
+  start: () => Promise<void>
 
   /**
    * Stops the automatic page translation functionality
@@ -88,23 +82,15 @@ export class PageTranslationManager implements IPageTranslationManager {
     return this.isPageTranslating
   }
 
-  async start(analyticsContext?: FeatureUsageContext): Promise<void> {
+  async start(): Promise<void> {
     if (this.isPageTranslating) {
       console.warn("PageTranslationManager is already active")
       return
     }
 
-    const trackedContext = window === window.top ? analyticsContext : undefined
-
     const config = await getLocalConfig()
     if (!config) {
       console.warn("Config is not initialized")
-      if (trackedContext) {
-        void trackFeatureUsed({
-          ...trackedContext,
-          outcome: "failure",
-        })
-      }
       return
     }
 
@@ -113,73 +99,44 @@ export class PageTranslationManager implements IPageTranslationManager {
       translate: config.translate,
       language: config.language,
     })) {
-      if (trackedContext) {
-        void trackFeatureUsed({
-          ...trackedContext,
-          outcome: "failure",
-        })
-      }
       return
     }
 
-    try {
-      const providerConfig = resolveProviderConfig(config, "translate")
+    await sendMessage("setAndNotifyPageTranslationStateChangedByManager", {
+      enabled: true,
+      url: window.location.href,
+    })
 
-      await sendMessage("setAndNotifyPageTranslationStateChangedByManager", {
-        enabled: true,
-        url: window.location.href,
-      })
+    this.isPageTranslating = true
+    this.startDocumentTitleTracking()
 
-      this.isPageTranslating = true
-      await this.primeDocumentTitleContext(
-        config.translate.enableAIContentAware && isLLMProviderConfig(providerConfig),
-      )
-      this.startDocumentTitleTracking()
-
-      // Listen to existing elements when they enter the viewpoint
-      const walkId = getRandomUUID()
-      this.walkId = walkId
-      this.intersectionObserver = new IntersectionObserver(async (entries, observer) => {
-        for (const entry of entries) {
-          if (entry.isIntersecting) {
-            if (isHTMLElement(entry.target)) {
-              if (!entry.target.closest(`.${CONTENT_WRAPPER_CLASS}`)) {
-                const currentConfig = await getLocalConfig()
-                if (!currentConfig) {
-                  logger.error("Global config is not initialized")
-                  return
-                }
-                void translateWalkedElement(entry.target, walkId, currentConfig)
+    // Listen to existing elements when they enter the viewpoint
+    const walkId = getRandomUUID()
+    this.walkId = walkId
+    this.intersectionObserver = new IntersectionObserver(async (entries, observer) => {
+      for (const entry of entries) {
+        if (entry.isIntersecting) {
+          if (isHTMLElement(entry.target)) {
+            if (!entry.target.closest(`.${CONTENT_WRAPPER_CLASS}`)) {
+              const currentConfig = await getLocalConfig()
+              if (!currentConfig) {
+                logger.error("Global config is not initialized")
+                return
               }
+              void translateWalkedElement(entry.target, walkId, currentConfig)
             }
-            observer.unobserve(entry.target)
           }
+          observer.unobserve(entry.target)
         }
-      }, this.intersectionOptions)
-
-      // Initialize walkability state for existing elements
-      this.addWalkBlockedElements(document.body, config)
-      await this.observerTopLevelParagraphs(document.body, config)
-
-      // Start observing mutations from document.body and all shadow roots
-      this.observeMutations(document.body)
-
-      if (trackedContext) {
-        void trackFeatureUsed({
-          ...trackedContext,
-          outcome: "success",
-        })
       }
-    }
-    catch (error) {
-      if (trackedContext) {
-        void trackFeatureUsed({
-          ...trackedContext,
-          outcome: "failure",
-        })
-      }
-      throw error
-    }
+    }, this.intersectionOptions)
+
+    // Initialize walkability state for existing elements
+    this.addWalkBlockedElements(document.body, config)
+    await this.observerTopLevelParagraphs(document.body, config)
+
+    // Start observing mutations from document.body and all shadow roots
+    this.observeMutations(document.body)
   }
 
   stop(): void {
@@ -263,10 +220,7 @@ export class PageTranslationManager implements IPageTranslationManager {
       if (performance.now() - startTime < PageTranslationManager.MAX_DURATION) {
         this.isPageTranslating
           ? this.stop()
-          : void this.start(createFeatureUsageContext(
-            ANALYTICS_FEATURE.PAGE_TRANSLATION,
-            ANALYTICS_SURFACE.TOUCH_GESTURE,
-          ))
+          : void this.start()
       }
       reset()
     }
@@ -287,19 +241,6 @@ export class PageTranslationManager implements IPageTranslationManager {
 
   private shouldManageDocumentTitle(): boolean {
     return window === window.top
-  }
-
-  private async primeDocumentTitleContext(shouldPrimeWebPageContext: boolean): Promise<void> {
-    if (!this.shouldManageDocumentTitle() || !shouldPrimeWebPageContext) {
-      return
-    }
-
-    try {
-      await getOrCreateWebPageContext()
-    }
-    catch (error) {
-      logger.warn("Failed to prime webpage context before translating document title:", error)
-    }
   }
 
   private startDocumentTitleTracking(): void {
@@ -425,14 +366,14 @@ export class PageTranslationManager implements IPageTranslationManager {
 
     walkAndLabelElement(container, this.walkId, config)
     // if container itself has paragraph and the id
-    if (container.hasAttribute("data-read-frog-paragraph") && container.getAttribute("data-read-frog-walked") === this.walkId) {
+    if (container.hasAttribute("data-tl-paragraph") && container.getAttribute("data-tl-walked") === this.walkId) {
       observer.observe(container)
       return
     }
 
     const paragraphs = this.collectParagraphElementsDeep(container, this.walkId)
     const topLevelParagraphs = paragraphs.filter((el) => {
-      const ancestor = el.parentElement?.closest("[data-read-frog-paragraph]")
+      const ancestor = el.parentElement?.closest("[data-tl-paragraph]")
       // keep it if either:
       //  • no paragraph ancestor at all, or
       //  • the ancestor is *not* inside container
@@ -448,7 +389,7 @@ export class PageTranslationManager implements IPageTranslationManager {
     const result: HTMLElement[] = []
 
     const collectFromContainer = (root: HTMLElement | Document | ShadowRoot) => {
-      const elements = root.querySelectorAll<HTMLElement>(`[data-read-frog-paragraph][data-read-frog-walked="${CSS.escape(walkId)}"]`)
+      const elements = root.querySelectorAll<HTMLElement>(`[data-tl-paragraph][data-tl-walked="${CSS.escape(walkId)}"]`)
       result.push(...[...elements])
     }
 

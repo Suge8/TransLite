@@ -1,5 +1,5 @@
-import type { LangCodeISO6393 } from "@read-frog/definitions"
 import type { LanguageItem } from "./language-combobox-options"
+import type { LangCodeISO6393 } from "@/utils/languages/definitions"
 import { useMemo } from "react"
 import { i18n } from "#imports"
 import {
@@ -49,7 +49,7 @@ export function LanguageCombobox({
     >
       <ComboboxInput
         className={className}
-        placeholder={placeholder ?? i18n.t("translationHub.searchLanguages")}
+        placeholder={placeholder ?? i18n.t("languageCombobox.searchLanguages")}
       />
       <ComboboxContent className="w-fit">
         <ComboboxList>
@@ -60,7 +60,7 @@ export function LanguageCombobox({
             </ComboboxItem>
           )}
         </ComboboxList>
-        <ComboboxEmpty>{i18n.t("translationHub.noLanguagesFound")}</ComboboxEmpty>
+        <ComboboxEmpty>{i18n.t("languageCombobox.noLanguagesFound")}</ComboboxEmpty>
       </ComboboxContent>
     </Combobox>
   )

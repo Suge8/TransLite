@@ -16,13 +16,13 @@ export const TRANSLATE_LOOK_AHEAD_MS = 30_000
 export const PROCESS_LOOK_AHEAD_MS = 60_000
 
 // DOM IDs
-export const TRANSLATE_BUTTON_CONTAINER_ID = "read-frog-subtitles-translate-button-container"
-export const HIDE_NATIVE_CAPTIONS_STYLE_ID = "read-frog-hide-native-captions"
+export const TRANSLATE_BUTTON_CONTAINER_ID = "tl-subtitles-translate-button-container"
+export const HIDE_NATIVE_CAPTIONS_STYLE_ID = "tl-hide-native-captions"
 
 // Class names
-export const SUBTITLES_VIEW_CLASS = "read-frog-subtitles-view"
-export const STATE_MESSAGE_CLASS = "read-frog-subtitles-state-message"
-export const TRANSLATE_BUTTON_CLASS = "read-frog-subtitles-translate-button"
+export const SUBTITLES_VIEW_CLASS = "tl-subtitles-view"
+export const STATE_MESSAGE_CLASS = "tl-subtitles-state-message"
+export const TRANSLATE_BUTTON_CLASS = "tl-subtitles-translate-button"
 
 // YouTube specific
 export const YOUTUBE_WATCH_URL_PATTERN = "youtube.com/watch"
@@ -30,13 +30,13 @@ export const YOUTUBE_EMBED_PATH_PATTERN = /\/embed\/[^/?]+/
 export const YOUTUBE_NAVIGATE_START_EVENT = "yt-navigate-start"
 export const YOUTUBE_NAVIGATE_FINISH_EVENT = "yt-navigate-finish"
 export const YOUTUBE_NATIVE_SUBTITLES_CLASS = ".ytp-caption-window-container"
-export const PLAYER_DATA_REQUEST_TYPE = "READ_FROG_GET_PLAYER_DATA"
-export const PLAYER_DATA_RESPONSE_TYPE = "READ_FROG_PLAYER_DATA"
-export const WAIT_TIMEDTEXT_REQUEST_TYPE = "READ_FROG_WAIT_TIMEDTEXT"
-export const WAIT_TIMEDTEXT_RESPONSE_TYPE = "READ_FROG_TIMEDTEXT_READY"
+export const PLAYER_DATA_REQUEST_TYPE = "TRANSLITE_GET_PLAYER_DATA"
+export const PLAYER_DATA_RESPONSE_TYPE = "TRANSLITE_PLAYER_DATA"
+export const WAIT_TIMEDTEXT_REQUEST_TYPE = "TRANSLITE_WAIT_TIMEDTEXT"
+export const WAIT_TIMEDTEXT_RESPONSE_TYPE = "TRANSLITE_TIMEDTEXT_READY"
 export const TIMEDTEXT_WAIT_TIMEOUT_MS = 5000
-export const ENSURE_SUBTITLES_REQUEST_TYPE = "READ_FROG_ENSURE_SUBTITLES"
-export const ENSURE_SUBTITLES_RESPONSE_TYPE = "READ_FROG_ENSURE_SUBTITLES_DONE"
+export const ENSURE_SUBTITLES_REQUEST_TYPE = "TRANSLITE_ENSURE_SUBTITLES"
+export const ENSURE_SUBTITLES_RESPONSE_TYPE = "TRANSLITE_ENSURE_SUBTITLES_DONE"
 export const POST_MESSAGE_TIMEOUT_MS = 6000
 
 // YouTube player wait constants

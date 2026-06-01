@@ -1,3 +1,5 @@
+export const CONFIG_STORAGE_KEY = "config" as const
+
 export const TRANSLATION_STATE_KEY_PREFIX = "session:translationState" as const
 
 export function getTranslationStateKey(tabId: number): `session:translationState.${number}` {

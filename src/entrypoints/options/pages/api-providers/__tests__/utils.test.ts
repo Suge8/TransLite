@@ -3,31 +3,29 @@ import type { APIProviderConfig } from "@/types/config/provider"
 import { describe, expect, it, vi } from "vitest"
 import { duplicateProvider } from "../utils"
 
-type AlibabaProviderConfig = Extract<APIProviderConfig, { provider: "alibaba" }>
+type DeepSeekProviderConfig = Extract<APIProviderConfig, { provider: "deepseek" }>
 
 describe("api provider utils", () => {
   it("duplicates an existing provider config with a fresh id and unique name", async () => {
-    const sourceProvider: AlibabaProviderConfig = {
-      id: "alibaba-original",
-      name: "Alibaba Cloud",
+    const sourceProvider: DeepSeekProviderConfig = {
+      id: "deepseek-original",
+      name: "DeepSeek",
       description: "shared credentials",
       enabled: true,
-      provider: "alibaba",
+      provider: "deepseek",
       apiKey: "[REDACTED]",
-      baseURL: "https://dashscope.aliyuncs.com/compatible-mode/v1",
+      baseURL: "https://api.deepseek.com/v1",
       temperature: 0.3,
-      providerOptions: { extraBody: { enable_thinking: false } },
-      headers: { "x-test": "enabled" },
       model: {
-        model: "qwen3-max",
+        model: "deepseek-v4-flash",
         isCustomModel: true,
-        customModel: "qwen3-max",
+        customModel: "deepseek-v4-flash",
       },
     }
-    const existingCopy: AlibabaProviderConfig = {
+    const existingCopy: DeepSeekProviderConfig = {
       ...sourceProvider,
-      id: "alibaba-copy",
-      name: "Alibaba Cloud 1",
+      id: "deepseek-copy",
+      name: "DeepSeek 1",
     }
     const providersConfig = [sourceProvider, existingCopy] as Config["providersConfig"]
     let updatedProviders: Config["providersConfig"] | undefined
@@ -47,16 +45,14 @@ describe("api provider utils", () => {
     expect(setProvidersConfig).toHaveBeenCalledOnce()
     expect(updatedProviders).toHaveLength(3)
 
-    const duplicatedProvider = updatedProviders?.[2] as AlibabaProviderConfig
+    const duplicatedProvider = updatedProviders?.[2] as DeepSeekProviderConfig
     expect(duplicatedProvider).toEqual({
       ...sourceProvider,
       id: newProviderId,
-      name: "Alibaba Cloud 2",
+      name: "DeepSeek 2",
     })
     expect(duplicatedProvider).not.toBe(sourceProvider)
     expect(duplicatedProvider.model).not.toBe(sourceProvider.model)
-    expect(duplicatedProvider.providerOptions).not.toBe(sourceProvider.providerOptions)
-    expect(duplicatedProvider.headers).not.toBe(sourceProvider.headers)
     expect(setSelectedProviderId).toHaveBeenCalledWith(newProviderId)
   })
 })

@@ -1,11 +1,10 @@
 import type { PromptResolver } from "./api/ai"
 import type { Config } from "@/types/config/config"
 import type { ProviderConfig } from "@/types/config/provider"
-import { ISO6393_TO_6391, LANG_CODE_TO_EN_NAME } from "@read-frog/definitions"
 import { isLLMProviderConfig, isNonAPIProvider, isPureAPIProvider } from "@/types/config/provider"
+import { ISO6393_TO_6391, LANG_CODE_TO_EN_NAME } from "@/utils/languages/definitions"
 import { aiTranslate } from "./api/ai"
 import { deeplTranslate } from "./api/deepl"
-import { deeplxTranslate } from "./api/deeplx"
 import { googleTranslate } from "./api/google"
 import { microsoftTranslate } from "./api/microsoft"
 import { prepareTranslationText } from "./text-preparation"
@@ -49,10 +48,7 @@ export async function executeTranslate<TContext>(
     if (!targetLang) {
       throw new Error(`Invalid target language code: ${langConfig.targetCode}`)
     }
-    if (provider === "deeplx") {
-      translatedText = await deeplxTranslate(preparedText, sourceLang, targetLang, providerConfig, options)
-    }
-    else if (provider === "deepl") {
+    if (provider === "deepl") {
       translatedText = await deeplTranslate(text, sourceLang, targetLang, providerConfig, options)
     }
   }

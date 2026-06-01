@@ -4,11 +4,11 @@ import { matchDomainPattern } from "./url"
 // Programmatic iframe injection writes the resolved owner-page URL here so
 // about:blank/about:srcdoc frames can inherit the site-control decision of
 // the real page context they belong to.
-export const SITE_CONTROL_URL_WINDOW_KEY = "__READ_FROG_SITE_CONTROL_URL__" as const
+export const SITE_CONTROL_URL_WINDOW_KEY = "__TRANSLITE_SITE_CONTROL_URL__" as const
 
 declare global {
   interface Window {
-    __READ_FROG_SITE_CONTROL_URL__?: string
+    __TRANSLITE_SITE_CONTROL_URL__?: string
   }
 }
 
@@ -37,7 +37,7 @@ export function getEffectiveSiteControlUrl(url: string): string {
     return url
   }
 
-  return resolveEffectiveSiteControlUrl(url, window.__READ_FROG_SITE_CONTROL_URL__)
+  return resolveEffectiveSiteControlUrl(url, window.__TRANSLITE_SITE_CONTROL_URL__)
 }
 
 export function clearEffectiveSiteControlUrl(): void {
@@ -45,5 +45,5 @@ export function clearEffectiveSiteControlUrl(): void {
     return
   }
 
-  delete window.__READ_FROG_SITE_CONTROL_URL__
+  delete window.__TRANSLITE_SITE_CONTROL_URL__
 }

@@ -14,11 +14,7 @@ type KeyOfPreloadConfig = keyof PreloadConfigType
 
 export function PreloadConfig() {
   return (
-    <ConfigCard
-      id="preload-config"
-      title={i18n.t("options.translation.preloadConfig.title")}
-      description={i18n.t("options.translation.preloadConfig.description")}
-    >
+    <ConfigCard id="preload-config" title={i18n.t("options.translation.preloadConfig.title")}>
       <FieldGroup>
         <PreloadNumberSelector property="margin" />
         <PreloadNumberSelector property="threshold" />

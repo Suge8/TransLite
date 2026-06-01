@@ -1,12 +1,9 @@
 import { useAtom, useAtomValue } from "jotai"
 import { browser, i18n } from "#imports"
 import { Button } from "@/components/ui/base-ui/button"
-import { ANALYTICS_FEATURE, ANALYTICS_SURFACE } from "@/types/analytics"
-import { createFeatureUsageContext } from "@/utils/analytics"
 import { configFieldsAtomMap } from "@/utils/atoms/config"
 import { sendMessage } from "@/utils/message"
-import { formatHotkey } from "@/utils/os.ts"
-import { isPageTranslationShortcutEmpty } from "@/utils/page-translation-shortcut"
+import { formatPageTranslationShortcut, isPageTranslationShortcutEmpty } from "@/utils/page-translation-shortcut"
 import { cn } from "@/utils/styles/utils"
 import { isPageTranslatedAtom } from "../atoms/auto-translate"
 import { isIgnoreTabAtom } from "../atoms/ignore"
@@ -31,9 +28,6 @@ export default function TranslateButton({ className }: { className?: string }) {
       void sendMessage("tryToSetEnablePageTranslationByTabId", {
         tabId: currentTab.id,
         enabled: nextEnabled,
-        analyticsContext: nextEnabled
-          ? createFeatureUsageContext(ANALYTICS_FEATURE.PAGE_TRANSLATION, ANALYTICS_SURFACE.POPUP)
-          : undefined,
       })
 
       setIsPageTranslated(prev => !prev)
@@ -42,7 +36,7 @@ export default function TranslateButton({ className }: { className?: string }) {
 
   const isSiteBlocked = mode === "whitelist" ? !isCurrentSiteInWhitelist : isCurrentSiteInBlacklist
   const isDisabled = isIgnoreTab || isSiteBlocked
-  const formattedShortcut = formatHotkey(translateConfig.page.shortcut)
+  const formattedShortcut = formatPageTranslationShortcut(translateConfig.page.shortcut)
   const shortcutSuffix = isPageTranslationShortcutEmpty(translateConfig.page.shortcut) ? "" : ` (${formattedShortcut})`
 
   return (
@@ -50,13 +44,20 @@ export default function TranslateButton({ className }: { className?: string }) {
       onClick={toggleTranslation}
       disabled={isDisabled}
       className={cn(
-        "block truncate",
+        "relative h-10 w-full overflow-hidden rounded-xl border-0 text-[13px] font-semibold tracking-wide transition-all duration-300 active:translate-y-px disabled:opacity-100",
+        isDisabled
+          ? "bg-muted text-muted-foreground/70"
+          : isPageTranslated
+            ? "bg-secondary text-secondary-foreground ring-1 ring-inset ring-border hover:bg-secondary/70"
+            : "bg-[linear-gradient(180deg,oklch(0.645_0.205_287),oklch(0.53_0.215_286))] text-white ring-1 ring-inset ring-white/15 shadow-[0_8px_22px_-6px_oklch(0.55_0.22_288_/_0.6)] hover:brightness-[1.06] hover:shadow-[0_12px_28px_-6px_oklch(0.55_0.22_288_/_0.78)]",
         className,
       )}
     >
-      {isPageTranslated
-        ? i18n.t("popup.showOriginal")
-        : `${i18n.t("popup.translate")}${shortcutSuffix}`}
+      <span className="relative z-10 flex items-center justify-center gap-1.5 truncate">
+        {isPageTranslated
+          ? i18n.t("popup.showOriginal")
+          : `${i18n.t("popup.translate")}${shortcutSuffix}`}
+      </span>
     </Button>
   )
 }

@@ -50,7 +50,7 @@ import browser from 'webextension-polyfill';
 interface AppSchema {
   installDate: number;
   theme: 'light' | 'dark';
-  lastSyncedAt: string | null;
+  lastStoredAt: string | null;
 }
 
 const appStorage = defineExtensionStorage<AppSchema>(browser.storage.local);

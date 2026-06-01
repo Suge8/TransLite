@@ -2,7 +2,7 @@ const valueParser = require("postcss-value-parser")
 
 const DEFAULTS = {
   fromPrefix: "--tw-",
-  toPrefix: "--rf-tw-",
+  toPrefix: "--lt-tw-",
 }
 
 function renameVarName(varName, fromPrefix, toPrefix) {

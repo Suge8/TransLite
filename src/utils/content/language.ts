@@ -1,18 +1,18 @@
-import type { LangCodeISO6393 } from "@read-frog/definitions"
 import type { BackgroundGenerateTextPayload } from "@/types/background-generate-text"
 import type { LLMProviderConfig } from "@/types/config/provider"
-import { langCodeISO6393Schema } from "@read-frog/definitions"
+import type { LangCodeISO6393 } from "@/utils/languages/definitions"
 import { franc } from "franc"
 import { toast } from "sonner"
 import { i18n } from "#imports"
 import { isLLMProviderConfig } from "@/types/config/provider"
 import { getProviderConfigById } from "@/utils/config/helpers"
 import { getLocalConfig } from "@/utils/config/storage"
+import { langCodeISO6393Schema } from "@/utils/languages/definitions"
 import { logger } from "@/utils/logger"
 import { sendMessage } from "@/utils/message"
 import { getLanguageDetectionSystemPrompt, parseDetectedLanguageCode } from "@/utils/prompts/language-detection"
 import { resolveModelId } from "@/utils/providers/model-id"
-import { getProviderOptionsWithOverride } from "@/utils/providers/options"
+import { getProviderOptions } from "@/utils/providers/options"
 import { cleanText } from "./utils"
 
 const DEFAULT_MIN_LENGTH = 10
@@ -153,9 +153,9 @@ export async function detectLanguageWithLLM(
   }
 
   try {
-    const { model: providerModel, provider, providerOptions: userProviderOptions, temperature } = config
+    const { model: providerModel, provider, temperature } = config
     const modelName = resolveModelId(providerModel)
-    const providerOptions = getProviderOptionsWithOverride(modelName ?? "", provider, userProviderOptions)
+    const providerOptions = getProviderOptions(modelName ?? "", provider)
     const payload: BackgroundGenerateTextPayload = {
       providerId: config.id,
       system: getLanguageDetectionSystemPrompt(),

@@ -1,5 +1,5 @@
-import type { LangCodeISO6391 } from "@read-frog/definitions"
 import type { ProviderConfig } from "@/types/config/provider"
+import type { LangCodeISO6391 } from "@/utils/languages/definitions"
 import { sendMessage } from "@/utils/message"
 
 type DeepLProviderConfig = Extract<ProviderConfig, { provider: "deepl" }>

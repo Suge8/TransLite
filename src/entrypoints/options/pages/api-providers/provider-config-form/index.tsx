@@ -1,4 +1,3 @@
-import type { Config } from "@/types/config/config"
 import type { ProvidersConfig } from "@/types/config/provider"
 import { useStore } from "@tanstack/react-form"
 import { useAtom, useAtomValue, useSetAtom } from "jotai"
@@ -23,7 +22,6 @@ import { providerConfigAtom } from "@/utils/atoms/provider"
 import {
   computeLanguageDetectionFallbackAfterDeletion,
   computeProviderFallbacksAfterDeletion,
-  computeSelectionToolbarCustomActionFallbacksAfterDeletion,
   findFeatureMissingProvider,
 } from "@/utils/config/helpers"
 import { buildFeatureProviderPatch } from "@/utils/constants/feature-providers"
@@ -36,9 +34,6 @@ import { AdvancedOptionsSection } from "./components/advanced-options-section"
 import { ConfigHeader } from "./config-header"
 import { FeatureProviderSection } from "./feature-provider-section"
 import { formOpts, useAppForm } from "./form"
-import { ProviderHeadersField } from "./provider-headers-field"
-import { ProviderOptionsField } from "./provider-options-field"
-import { ProviderSpecificSettingsField } from "./provider-specific-settings-field"
 import { TemperatureField } from "./temperature-field"
 import { TranslateModelSelector } from "./translate-model-selector"
 
@@ -91,34 +86,12 @@ export function ProviderConfigForm() {
 
     const unsatisfied = findFeatureMissingProvider(updatedAllProviders)
     if (unsatisfied) {
-      toast.error(i18n.t("options.apiProviders.form.atLeastOneLLMProvider")) // TODO: make this word more general
-      return
-    }
-
-    const updatedCustomActions = computeSelectionToolbarCustomActionFallbacksAfterDeletion(
-      providerConfig.id,
-      config,
-      updatedAllProviders,
-    )
-    const hasAffectedCustomActions = config.selectionToolbar.customActions
-      .some(action => action.providerId === providerConfig.id)
-
-    if (hasAffectedCustomActions && !updatedCustomActions) {
-      toast.error(i18n.t("options.apiProviders.form.atLeastOneLLMProvider"))
+      toast.error(i18n.t("options.apiProviders.form.atLeastOneFeatureProvider"))
       return
     }
 
     const fallbacks = computeProviderFallbacksAfterDeletion(providerConfig.id, config, updatedAllProviders)
     let patch = buildFeatureProviderPatch(fallbacks)
-    if (updatedCustomActions) {
-      patch = {
-        ...patch,
-        selectionToolbar: {
-          ...(patch.selectionToolbar ?? {}),
-          customActions: updatedCustomActions,
-        },
-      } as Partial<Config>
-    }
 
     const ldFallback = computeLanguageDetectionFallbackAfterDeletion(providerConfig.id, config, updatedAllProviders)
     if (ldFallback !== null) {
@@ -128,7 +101,7 @@ export function ProviderConfigForm() {
           ...config.languageDetection,
           providerId: ldFallback,
         },
-      } as Partial<Config>
+      }
     }
 
     if (Object.keys(patch).length > 0) {
@@ -166,7 +139,6 @@ export function ProviderConfigForm() {
 
           <APIKeyField form={form} />
           <BaseURLField form={form} />
-          <ProviderSpecificSettingsField form={form} />
           {isTranslateProviderType && (
             <TranslateModelSelector form={form} />
           )}
@@ -174,8 +146,6 @@ export function ProviderConfigForm() {
           {isLLM && (
             <AdvancedOptionsSection>
               <TemperatureField form={form} />
-              <ProviderOptionsField form={form} />
-              <ProviderHeadersField form={form} />
             </AdvancedOptionsSection>
           )}
         </div>

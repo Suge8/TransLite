@@ -37,16 +37,14 @@ export function ClearAiSegmentationCache() {
   return (
     <ConfigCard
       id="clear-ai-segmentation-cache"
+      inline
       title={i18n.t("options.videoSubtitles.aiSegmentation.clearCacheDialog.title")}
-      description={i18n.t("options.videoSubtitles.aiSegmentation.clearCacheDialog.description")}
     >
       <AlertDialog open={open} onOpenChange={setOpen}>
-        <div className="w-full flex justify-end">
-          <AlertDialogTrigger render={<Button variant="destructive" disabled={isClearing} />}>
-            <IconTrash className="size-4" />
-            {isClearing ? i18n.t("options.videoSubtitles.aiSegmentation.clearing") : i18n.t("options.videoSubtitles.aiSegmentation.clearCache")}
-          </AlertDialogTrigger>
-        </div>
+        <AlertDialogTrigger render={<Button variant="destructive" disabled={isClearing} />}>
+          <IconTrash className="size-4" />
+          {isClearing ? i18n.t("options.videoSubtitles.aiSegmentation.clearing") : i18n.t("options.videoSubtitles.aiSegmentation.clearCache")}
+        </AlertDialogTrigger>
         <AlertDialogContent>
           <AlertDialogHeader>
             <AlertDialogTitle>{i18n.t("options.videoSubtitles.aiSegmentation.clearCacheDialog.title")}</AlertDialogTitle>

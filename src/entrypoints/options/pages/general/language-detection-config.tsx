@@ -22,32 +22,14 @@ export default function LanguageDetectionConfig() {
     [providersConfig],
   )
 
-  const hasLLMProviders = enabledLLMProviders.length > 0
   const isLLMMode = languageDetection.mode === "llm"
-
-  const statusIndicator = useMemo(() => {
-    if (!hasLLMProviders) {
-      return { color: "bg-orange-400", text: i18n.t("options.general.languageDetection.status.noProviders") }
-    }
-    if (!isLLMMode) {
-      return { color: "bg-blue-400", text: i18n.t("options.general.languageDetection.status.basicRecommend") }
-    }
-    return { color: "bg-green-500", text: i18n.t("options.general.languageDetection.status.llmEnabled") }
-  }, [hasLLMProviders, isLLMMode])
+  const hasLLMProviders = enabledLLMProviders.length > 0
 
   return (
     <ConfigCard
       id="language-detection"
       title={i18n.t("options.general.languageDetection.title")}
-      description={(
-        <>
-          {i18n.t("options.general.languageDetection.description")}
-          <div className="flex items-center gap-1.5 mt-2">
-            <div className={`size-2 rounded-full ${statusIndicator.color}`} />
-            <span className="text-xs">{statusIndicator.text}</span>
-          </div>
-        </>
-      )}
+      description={i18n.t("options.general.languageDetection.description")}
     >
       <FieldGroup>
         <RadioGroup
@@ -67,7 +49,7 @@ export default function LanguageDetectionConfig() {
 
             void setLanguageDetection(nextConfig)
           }}
-          className="flex flex-row gap-4"
+          className="flex flex-col gap-3"
         >
           <div className="flex items-center gap-2">
             <RadioGroupItem value="basic" id="lang-detection-basic" />

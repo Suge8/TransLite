@@ -32,11 +32,11 @@ export function useSubtitlesPanelDismiss({
     const path = event.composedPath()
     const clickedInsidePanel = !!panelRef.current && path.includes(panelRef.current)
     const clickedTrigger = isTranslateTriggerTarget(path)
-    const clickedPanelPopup = path.some(target =>
+    const clickedSelectPopup = path.some(target =>
       isElement(target) && target.matches("[data-slot='select-content']"),
     )
 
-    if (clickedInsidePanel || clickedTrigger || clickedPanelPopup) {
+    if (clickedInsidePanel || clickedTrigger || clickedSelectPopup) {
       return
     }
 

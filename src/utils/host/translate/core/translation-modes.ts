@@ -15,7 +15,6 @@ import { extractTextContent } from "../../dom/traversal"
 import { removeTranslatedWrapperWithRestore } from "../dom/translation-cleanup"
 import { insertTranslatedNodeIntoWrapper } from "../dom/translation-insertion"
 import { findPreviousTranslatedWrapperInside } from "../dom/translation-wrapper"
-import { shouldFilterSmallParagraph } from "../filter-small-paragraph"
 import { prepareTranslationText } from "../text-preparation"
 import { setTranslationDirAndLang } from "../translation-attributes"
 import { createSpinnerInside, getTranslatedTextAndRemoveSpinner } from "../ui/spinner"
@@ -89,9 +88,6 @@ export async function translateNodesBilingualMode(
 
     const textContent = transNodes.map(node => extractTextContent(node, config)).join("").trim()
     if (!textContent || isNumericContent(textContent))
-      return
-
-    if (await shouldFilterSmallParagraph(textContent, config))
       return
 
     const ownerDoc = getOwnerDocument(targetNode)
@@ -231,9 +227,6 @@ export async function translateNodeTranslationOnlyMode(
 
     const innerTextContent = transNodes.map(node => extractTextContent(node, config)).join("")
     if (!innerTextContent.trim() || isNumericContent(innerTextContent))
-      return
-
-    if (await shouldFilterSmallParagraph(innerTextContent, config))
       return
 
     const cleanTextContent = (content: string): string => {

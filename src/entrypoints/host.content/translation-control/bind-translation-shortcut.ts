@@ -1,46 +1,37 @@
-import type { Hotkey } from "@tanstack/hotkeys"
-import type { PageTranslationManager } from "./page-translation"
+import type { Hotkey, HotkeyRegistrationHandle } from "@tanstack/hotkeys"
+import type { Config } from "@/types/config/config"
 import { HotkeyManager } from "@tanstack/hotkeys"
-import { ANALYTICS_FEATURE, ANALYTICS_SURFACE } from "@/types/analytics"
-import { createFeatureUsageContext } from "@/utils/analytics"
-import { getLocalConfig } from "@/utils/config/storage"
+import { browser } from "#imports"
+import { CONFIG_STORAGE_KEY } from "@/utils/constants/storage-keys"
 import { isPageTranslationShortcutEmpty, isValidConfiguredPageTranslationShortcut } from "@/utils/page-translation-shortcut"
 
-/**
- * Binds page translation shortcut key from the given config.
- * Uses sync cached config inside the hotkey callback to avoid async overhead.
- */
-export async function bindTranslationShortcutKey(pageTranslationManager: PageTranslationManager) {
-  const config = await getLocalConfig()
-  if (!config || isPageTranslationShortcutEmpty(config.translate.page.shortcut)) {
-    return () => {}
+export function bindTranslationShortcutKey(config: Config | null, onToggle: () => void) {
+  let registration = registerShortcut(config?.translate.page.shortcut, onToggle)
+
+  const handleStorageChange = (changes: Record<string, { newValue?: unknown }>, areaName: string) => {
+    if (areaName !== "local" || !changes[CONFIG_STORAGE_KEY])
+      return
+
+    registration?.unregister()
+    const nextConfig = changes[CONFIG_STORAGE_KEY].newValue as Config | undefined
+    registration = registerShortcut(nextConfig?.translate.page.shortcut, onToggle)
   }
 
-  const shortcut = config.translate.page.shortcut
-  if (!isValidConfiguredPageTranslationShortcut(shortcut)) {
-    return () => {}
-  }
-
-  const registration = HotkeyManager.getInstance().register(
-    shortcut as Hotkey,
-    () => {
-      if (pageTranslationManager.isActive) {
-        pageTranslationManager.stop()
-      }
-      else {
-        void pageTranslationManager.start(
-          createFeatureUsageContext(ANALYTICS_FEATURE.PAGE_TRANSLATION, ANALYTICS_SURFACE.SHORTCUT),
-        )
-      }
-    },
-    {
-      ignoreInputs: true,
-      preventDefault: true,
-      stopPropagation: true,
-    },
-  )
+  browser.storage.onChanged.addListener(handleStorageChange)
 
   return () => {
-    registration.unregister()
+    registration?.unregister()
+    browser.storage.onChanged.removeListener(handleStorageChange)
   }
+}
+
+function registerShortcut(shortcut: string | undefined, onToggle: () => void): HotkeyRegistrationHandle | null {
+  if (!shortcut || isPageTranslationShortcutEmpty(shortcut) || !isValidConfiguredPageTranslationShortcut(shortcut))
+    return null
+
+  return HotkeyManager.getInstance().register(shortcut as Hotkey, onToggle, {
+    ignoreInputs: true,
+    preventDefault: true,
+    stopPropagation: true,
+  })
 }

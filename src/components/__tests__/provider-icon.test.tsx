@@ -56,11 +56,11 @@ describe("provider icon", () => {
     shouldProxyAssetUrlMock.mockReturnValue(false)
     const { default: ProviderIcon } = await import("../provider-icon")
 
-    render(<ProviderIcon logo="/assets/providers/deeplx-light.svg" name="DeepLX" size="md" />)
+    render(<ProviderIcon logo="/assets/providers/deepl-light.svg" name="DeepL" size="md" />)
 
-    const image = screen.getByRole("img", { name: "DeepLX" })
-    expect(image.getAttribute("src")).not.toBe("/assets/providers/deeplx-light.svg")
-    expect(image.getAttribute("src")).toMatch(/assets\/providers\/deeplx-light\.svg$/)
+    const image = screen.getByRole("img", { name: "DeepL" })
+    expect(image.getAttribute("src")).not.toBe("/assets/providers/deepl-light.svg")
+    expect(image.getAttribute("src")).toMatch(/assets\/providers\/deepl-light\.svg$/)
   })
 
   it("renders proxied logos through a canvas instead of an img tag", async () => {

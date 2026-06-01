@@ -425,7 +425,6 @@ describe("translate", () => {
     })
     describe("block node -> shallow inline node (inline node) -> single inline node + block node", () => {
       it("bilingual mode: should translate the unwrapped inline parent as a single inline wrapper", async () => {
-        // https://github.com/mengxi-ream/read-frog/pull/1055
         render(
           <div data-testid="test-node">
             <div style={{ display: "inline" }}>
@@ -451,7 +450,6 @@ describe("translate", () => {
         expect(node.textContent).toBe(`${MOCK_ORIGINAL_TEXT}${MOCK_ORIGINAL_TEXT}`)
       })
       it("translation only mode: should replace the unwrapped inline parent content with a single wrapper", async () => {
-        // https://github.com/mengxi-ream/read-frog/pull/1055
         render(
           <div data-testid="test-node">
             <div style={{ display: "inline" }}>
@@ -574,7 +572,6 @@ describe("translate", () => {
     })
     describe("inline nodes with aria-hidden block children", () => {
       it("bilingual mode: should treat inline node with aria-hidden block child as inline and translate as one paragraph", async () => {
-        // Github issue: https://github.com/mengxi-ream/read-frog/issues/737
         render(
           <div data-testid="test-node">
             <div style={{ display: "inline" }}>{MOCK_ORIGINAL_TEXT}</div>
@@ -892,7 +889,6 @@ describe("translate", () => {
         expect(node.textContent).toBe(`${MOCK_ORIGINAL_TEXT}${MOCK_ORIGINAL_TEXT}${MOCK_ORIGINAL_TEXT}`)
       })
       it("bilingual mode: should let br node to make its ancestor node to be forced block node", async () => {
-        // Github issue: https://github.com/mengxi-ream/read-frog/issues/587
         render(
           <div data-testid="test-node">
             {MOCK_ORIGINAL_TEXT}
@@ -978,7 +974,6 @@ describe("translate", () => {
       })
     })
     describe("inline node has only one block node child", () => {
-      // Github issue: https://github.com/mengxi-ream/read-frog/issues/530
       it("bilingual mode: should treat inline node with only one block node child as inline", async () => {
         render(
           <div data-testid="test-node">
@@ -1020,7 +1015,6 @@ describe("translate", () => {
         expect(node.textContent).toBe(`${MOCK_ORIGINAL_TEXT}${MOCK_ORIGINAL_TEXT}${MOCK_ORIGINAL_TEXT}`)
       })
       it("should treat inline element with only one meaningful block child as inline (not block)", async () => {
-        // https://github.com/mengxi-ream/read-frog/issues/530
         render(
           <div data-testid="test-node">
             <span style={{ display: "inline" }}>
@@ -1116,7 +1110,6 @@ describe("translate", () => {
         expect(node.textContent).toBe(`${MOCK_ORIGINAL_TEXT}${MOCK_ORIGINAL_TEXT}${MOCK_ORIGINAL_TEXT}`)
       })
       it("bilingual mode: should skip ruby annotations without splitting the paragraph", async () => {
-        // https://github.com/mengxi-ream/read-frog/pull/1055
         render(
           <p data-testid="test-node">
             {MOCK_ORIGINAL_TEXT}
@@ -1148,7 +1141,6 @@ describe("translate", () => {
     })
   })
   describe("don't walk into siblings (SVG, style, etc.)", () => {
-    // https://github.com/mengxi-ream/read-frog/issues/754
     it("bilingual mode: should filter out SVG and style siblings and translate inside inline div", async () => {
       render(
         <div data-testid="test-node">
@@ -1199,7 +1191,6 @@ describe("translate", () => {
   })
   describe("empty nodes in multiple child nodes", () => {
     it("bilingual mode: should not insert translation wrapper", async () => {
-      // https://github.com/mengxi-ream/read-frog/issues/717
       render(
         <div data-testid="test-node">
           <div><div style={{ display: "inline" }}>{MOCK_ORIGINAL_TEXT}</div></div>
@@ -1871,110 +1862,6 @@ describe("translate", () => {
         expect(translateTextForPage).toHaveBeenCalledTimes(2)
         expect(translateTextForPage).toHaveBeenNthCalledWith(1, MOCK_ORIGINAL_TEXT)
         expect(translateTextForPage).toHaveBeenNthCalledWith(2, MOCK_ORIGINAL_TEXT)
-      })
-    })
-  })
-
-  describe("small paragraph filter", () => {
-    const SHORT_TEXT = "Hi"
-    const LONG_TEXT = "This is a longer text with multiple words for testing"
-
-    const MIN_CHARS_CONFIG: Config = {
-      ...DEFAULT_CONFIG,
-      translate: {
-        ...DEFAULT_CONFIG.translate,
-        mode: "bilingual" as const,
-        page: {
-          ...DEFAULT_CONFIG.translate.page,
-          minCharactersPerNode: 10,
-          minWordsPerNode: 0,
-        },
-      },
-    }
-
-    const MIN_WORDS_CONFIG: Config = {
-      ...DEFAULT_CONFIG,
-      translate: {
-        ...DEFAULT_CONFIG.translate,
-        mode: "bilingual" as const,
-        page: {
-          ...DEFAULT_CONFIG.translate.page,
-          minCharactersPerNode: 0,
-          minWordsPerNode: 5,
-        },
-      },
-    }
-
-    async function translateWithConfig(config: Config, toggle: boolean = false) {
-      const id = crypto.randomUUID()
-      walkAndLabelElement(document.body, id, config)
-      await act(async () => {
-        await translateWalkedElement(document.body, id, config, toggle)
-        flushBatchedOperations()
-      })
-    }
-
-    describe("minCharactersPerNode filter", () => {
-      it("should skip translation for text shorter than minCharactersPerNode", async () => {
-        vi.mocked(translateTextForPage).mockClear()
-        render(
-          <div data-testid="test-node">
-            {SHORT_TEXT}
-          </div>,
-        )
-        const node = screen.getByTestId("test-node")
-        await translateWithConfig(MIN_CHARS_CONFIG, true)
-
-        // Should not have translation wrapper because text is too short
-        expect(node.querySelector(`.${CONTENT_WRAPPER_CLASS}`)).toBeFalsy()
-        expect(translateTextForPage).not.toHaveBeenCalled()
-      })
-
-      it("should translate text longer than minCharactersPerNode", async () => {
-        vi.mocked(translateTextForPage).mockClear()
-        render(
-          <div data-testid="test-node">
-            {LONG_TEXT}
-          </div>,
-        )
-        const node = screen.getByTestId("test-node")
-        await translateWithConfig(MIN_CHARS_CONFIG, true)
-
-        // Should have translation wrapper because text is long enough
-        expect(node.querySelector(`.${CONTENT_WRAPPER_CLASS}`)).toBeTruthy()
-        expect(translateTextForPage).toHaveBeenCalled()
-      })
-    })
-
-    describe("minWordsPerNode filter", () => {
-      it("should skip translation for text with fewer words than minWordsPerNode", async () => {
-        vi.mocked(translateTextForPage).mockClear()
-        render(
-          <div data-testid="test-node">
-            Two words
-          </div>,
-        )
-        const node = screen.getByTestId("test-node")
-        await translateWithConfig(MIN_WORDS_CONFIG, true)
-
-        // Should not have translation wrapper because word count is too low
-        expect(node.querySelector(`.${CONTENT_WRAPPER_CLASS}`)).toBeFalsy()
-        expect(translateTextForPage).not.toHaveBeenCalled()
-      })
-
-      it("should translate text with more words than minWordsPerNode", async () => {
-        vi.mocked(translateTextForPage).mockClear()
-        render(
-          <div data-testid="test-node">
-            {LONG_TEXT}
-          </div>,
-        )
-        const node = screen.getByTestId("test-node")
-        await translateWithConfig(MIN_WORDS_CONFIG, true)
-
-        // Should have translation wrapper because word count is enough
-        expect(node.querySelector(`.${CONTENT_WRAPPER_CLASS}`)).toBeTruthy()
-        expect(translateTextForPage).toHaveBeenCalled()
       })
     })
   })

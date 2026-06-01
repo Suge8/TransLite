@@ -1,18 +1,23 @@
 import { cn } from "@/utils/styles/utils"
 
-export function ConfigCard(
-  { id, title, description, children, className, titleClassName }:
-  { id?: string, title: React.ReactNode, description: React.ReactNode, children: React.ReactNode, className?: string, titleClassName?: string },
-) {
+export function ConfigCard({ id, title, description, children, className, titleClassName, inline }:
+{ id?: string, title: React.ReactNode, description?: React.ReactNode, children: React.ReactNode, className?: string, titleClassName?: string, inline?: boolean }) {
   return (
-    <section id={id} className={cn("py-6 flex lg:flex-row flex-col lg:gap-x-[50px] xl:gap-x-[100px] gap-y-6", className)}>
-      <div className="lg:basis-2/5 shrink-0">
-        <h2 className={cn("text-lg font-bold mb-1", titleClassName)}>{title}</h2>
-        <div className="text-sm text-muted-foreground">{description}</div>
+    <section
+      id={id}
+      className={cn(
+        "px-5 py-4",
+        inline ? "flex items-center justify-between gap-6" : "flex flex-col gap-3",
+        className,
+      )}
+    >
+      <div className="flex min-w-0 flex-col gap-0.5">
+        <h2 className={cn("text-sm font-medium text-foreground", titleClassName)}>{title}</h2>
+        {description && (
+          <div className="text-[13px] leading-relaxed text-muted-foreground text-pretty">{description}</div>
+        )}
       </div>
-      <div className="lg:basis-3/5 min-w-0">
-        {children}
-      </div>
+      {inline ? <div className="flex shrink-0 items-center justify-end">{children}</div> : children}
     </section>
   )
 }

@@ -6,7 +6,7 @@ import { Provider as JotaiProvider } from "jotai"
 import { useHydrateAtoms } from "jotai/utils"
 import * as React from "react"
 import { browser } from "#imports"
-import FrogToast from "@/components/frog-toast"
+import LiteToast from "@/components/lite-toast"
 import { ThemeProvider } from "@/components/providers/theme-provider"
 import { RecoveryBoundary } from "@/components/recovery/recovery-boundary"
 import { TooltipProvider } from "@/components/ui/base-ui/tooltip"
@@ -46,7 +46,7 @@ function HydrateAtoms({
 
 async function initApp() {
   const root = document.getElementById("root")!
-  root.className = "text-base antialiased w-[320px] bg-background"
+  root.className = "text-base antialiased w-[360px] bg-background"
 
   const [configValue, themeMode, activeTab] = await Promise.all([
     getLocalConfig(),
@@ -98,7 +98,7 @@ async function initApp() {
           >
             <ThemeProvider>
               <TooltipProvider>
-                <FrogToast />
+                <LiteToast />
                 <RecoveryBoundary>
                   <App />
                 </RecoveryBoundary>

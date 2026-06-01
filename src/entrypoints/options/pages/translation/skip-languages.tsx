@@ -1,4 +1,4 @@
-import type { LangCodeISO6393 } from "@read-frog/definitions"
+import type { LangCodeISO6393 } from "@/utils/languages/definitions"
 import { Icon } from "@iconify/react"
 import { useAtom } from "jotai"
 import { i18n } from "#imports"
@@ -13,20 +13,16 @@ import { ConfigCard } from "../../components/config-card"
 
 export function SkipLanguages() {
   return (
-    <div className="py-6 flex flex-col gap-y-4">
-      <ConfigCard
-        id="skip-languages"
-        title={i18n.t("options.translation.skipLanguages.title")}
-        description={i18n.t("options.translation.skipLanguages.description")}
-        className="py-0"
-      >
-        <div className="flex flex-col gap-4">
-          <TargetLanguageSkipToggle />
-          <SkipLanguagesSelector />
-        </div>
-      </ConfigCard>
-      <SelectedSkipLanguageCells />
-    </div>
+    <ConfigCard
+      id="skip-languages"
+      title={i18n.t("options.translation.skipLanguages.title")}
+    >
+      <div className="flex flex-col gap-4">
+        <TargetLanguageSkipToggle />
+        <SkipLanguagesSelector />
+        <SelectedSkipLanguageCells />
+      </div>
+    </ConfigCard>
   )
 }
 

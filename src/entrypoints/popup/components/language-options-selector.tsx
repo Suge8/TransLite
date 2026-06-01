@@ -1,8 +1,7 @@
-import type { LangCodeISO6393 } from "@read-frog/definitions"
 import type { LanguageItem } from "@/components/language-combobox-options"
+import type { LangCodeISO6393 } from "@/utils/languages/definitions"
 import { Combobox as ComboboxPrimitive } from "@base-ui/react"
 import { Icon } from "@iconify/react"
-import { langCodeISO6393Schema } from "@read-frog/definitions"
 import { IconChevronDown } from "@tabler/icons-react"
 import { useAtom, useAtomValue } from "jotai"
 import { useMemo } from "react"
@@ -20,6 +19,7 @@ import {
 import { configFieldsAtomMap } from "@/utils/atoms/config"
 import { detectedCodeAtom } from "@/utils/atoms/detected-code"
 import { getLanguageLabel, getLanguageName } from "@/utils/language-labels"
+import { langCodeISO6393Schema } from "@/utils/languages/definitions"
 
 function createLanguageItem(code: LangCodeISO6393): LanguageItem<LangCodeISO6393> {
   return {
@@ -29,7 +29,7 @@ function createLanguageItem(code: LangCodeISO6393): LanguageItem<LangCodeISO6393
   }
 }
 
-const langSelectorTriggerClasses = "!h-14 w-30 rounded-lg shadow-xs pr-2 gap-1 justify-between bg-transparent"
+const langSelectorTriggerClasses = "!h-14 flex-1 min-w-0 rounded-xl shadow-xs pr-2 gap-1 justify-between border-border/70 bg-card/60 backdrop-blur-sm transition-colors hover:border-brand/45 hover:bg-card"
 
 const langSelectorContentClasses = "flex flex-col items-start text-base font-medium min-w-0 flex-1"
 
@@ -56,7 +56,7 @@ function LanguageComboboxTrigger({
     >
       <div className={langSelectorContentClasses}>
         <span className="truncate w-full text-left">{label}</span>
-        <span className="text-sm text-neutral-500">{subtitle}</span>
+        <span className="text-sm text-muted-foreground">{subtitle}</span>
       </div>
       <IconChevronDown className="size-4 text-muted-foreground" />
     </ComboboxPrimitive.Trigger>
@@ -109,8 +109,16 @@ export default function LanguageOptionsSelector() {
 
   const targetLangLabel = currentTargetItem?.label ?? getLanguageLabel(language.targetCode)
 
+  const handleSwapLanguages = () => {
+    const nextSourceCode = language.targetCode
+    const nextTargetCode = language.sourceCode === "auto" ? detectedCode : language.sourceCode
+    if (nextSourceCode === nextTargetCode)
+      return
+    void setLanguage({ sourceCode: nextSourceCode, targetCode: nextTargetCode })
+  }
+
   return (
-    <div className="flex items-center justify-between">
+    <div className="flex items-center gap-2">
       <Combobox
         value={currentSourceItem}
         onValueChange={handleSourceLangChange}
@@ -128,7 +136,7 @@ export default function LanguageOptionsSelector() {
         <ComboboxContent className="rounded-lg shadow-md w-72">
           <ComboboxInput
             showTrigger={false}
-            placeholder={i18n.t("translationHub.searchLanguages")}
+            placeholder={i18n.t("languageCombobox.searchLanguages")}
           />
           <ComboboxList>
             {(item: LanguageItem) => (
@@ -138,10 +146,17 @@ export default function LanguageOptionsSelector() {
               </ComboboxItem>
             )}
           </ComboboxList>
-          <ComboboxEmpty>{i18n.t("translationHub.noLanguagesFound")}</ComboboxEmpty>
+          <ComboboxEmpty>{i18n.t("languageCombobox.noLanguagesFound")}</ComboboxEmpty>
         </ComboboxContent>
       </Combobox>
-      <Icon icon="tabler:arrow-right" className="h-4 w-4 text-neutral-500" />
+      <button
+        type="button"
+        onClick={handleSwapLanguages}
+        aria-label={i18n.t("popup.translate")}
+        className="group flex size-8 shrink-0 items-center justify-center rounded-full border border-border/70 bg-card text-muted-foreground shadow-sm transition-all duration-300 hover:rotate-180 hover:border-brand/50 hover:text-brand active:scale-90"
+      >
+        <Icon icon="tabler:arrows-exchange" className="size-4" />
+      </button>
       <Combobox
         value={currentTargetItem}
         onValueChange={handleTargetLangChange}
@@ -157,7 +172,7 @@ export default function LanguageOptionsSelector() {
         <ComboboxContent className="rounded-lg shadow-md w-72">
           <ComboboxInput
             showTrigger={false}
-            placeholder={i18n.t("translationHub.searchLanguages")}
+            placeholder={i18n.t("languageCombobox.searchLanguages")}
           />
           <ComboboxList>
             {(item: LanguageItem<LangCodeISO6393>) => (
@@ -166,7 +181,7 @@ export default function LanguageOptionsSelector() {
               </ComboboxItem>
             )}
           </ComboboxList>
-          <ComboboxEmpty>{i18n.t("translationHub.noLanguagesFound")}</ComboboxEmpty>
+          <ComboboxEmpty>{i18n.t("languageCombobox.noLanguagesFound")}</ComboboxEmpty>
         </ComboboxContent>
       </Combobox>
     </div>
@@ -174,5 +189,5 @@ export default function LanguageOptionsSelector() {
 }
 
 function AutoLangCell() {
-  return <span className="rounded-full bg-neutral-200 px-1 text-xs dark:bg-neutral-800 flex items-center">auto</span>
+  return <span className="rounded-full bg-muted px-1 text-xs text-muted-foreground flex items-center">auto</span>
 }

@@ -1,14 +1,11 @@
 import type { Config } from "@/types/config/config"
-import type { LLMProviderConfig, ProviderConfig } from "@/types/config/provider"
+import type { ProviderConfig } from "@/types/config/provider"
 import type { BatchQueueConfig, RequestQueueConfig } from "@/types/config/translate"
-import type { SubtitlePromptContext, WebPagePromptContext } from "@/types/content"
+import type { SubtitlePromptContext } from "@/types/content"
 import type { PromptResolver } from "@/utils/host/translate/api/ai"
 import { isLLMProviderConfig } from "@/types/config/provider"
-import { putBatchRequestRecord } from "@/utils/batch-request-record"
 import { DEFAULT_CONFIG } from "@/utils/constants/config"
 import { BATCH_SEPARATOR, BATCH_SEPARATOR_LINE_PATTERN } from "@/utils/constants/prompt"
-import { generateArticleSummary } from "@/utils/content/summary"
-import { cleanText } from "@/utils/content/utils"
 import { db } from "@/utils/db/dexie/db"
 import { Sha256Hex } from "@/utils/hash"
 import { microsoftTranslate } from "@/utils/host/translate/api/microsoft"
@@ -41,108 +38,6 @@ export async function executeBatchTranslation<TContext>(
   const batchText = texts.join(`\n\n${BATCH_SEPARATOR}\n\n`)
   const result = await executeTranslate(batchText, langConfig, providerConfig, promptResolver, { isBatch: true, context })
   return parseBatchResult(result)
-}
-
-async function getOrGenerateWebPageSummary(
-  webTitle: string,
-  webContent: string,
-  providerConfig: LLMProviderConfig,
-  requestQueue: RequestQueue,
-): Promise<string | null> {
-  const preparedText = cleanText(webContent)
-  if (!preparedText) {
-    return null
-  }
-
-  const textHash = Sha256Hex(preparedText)
-  const cacheKey = Sha256Hex(webTitle, textHash, JSON.stringify(providerConfig))
-
-  const cached = await db.articleSummaryCache.get(cacheKey)
-  if (cached) {
-    logger.info("Using cached summary")
-    return cached.summary
-  }
-
-  const thunk = async () => {
-    const cachedAgain = await db.articleSummaryCache.get(cacheKey)
-    if (cachedAgain) {
-      return cachedAgain.summary
-    }
-
-    const summary = await generateArticleSummary(webTitle, webContent, providerConfig)
-    if (!summary) {
-      return ""
-    }
-
-    await db.articleSummaryCache.put({
-      key: cacheKey,
-      summary,
-      createdAt: new Date(),
-    })
-
-    logger.info("Generated and cached new summary")
-    return summary
-  }
-
-  try {
-    const summary = await requestQueue.enqueue(thunk, Date.now(), cacheKey)
-    return summary || null
-  }
-  catch (error) {
-    logger.warn("Failed to get/generate summary:", error)
-    return null
-  }
-}
-
-async function getOrGenerateSubtitleSummary(
-  videoTitle: string,
-  subtitlesContext: string,
-  providerConfig: LLMProviderConfig,
-  requestQueue: RequestQueue,
-): Promise<string | null> {
-  const preparedText = cleanText(subtitlesContext)
-  if (!preparedText) {
-    return null
-  }
-
-  const textHash = Sha256Hex(preparedText)
-  const cacheKey = Sha256Hex(textHash, JSON.stringify(providerConfig))
-
-  const cached = await db.articleSummaryCache.get(cacheKey)
-  if (cached) {
-    logger.info("Using cached summary")
-    return cached.summary
-  }
-
-  const thunk = async () => {
-    const cachedAgain = await db.articleSummaryCache.get(cacheKey)
-    if (cachedAgain) {
-      return cachedAgain.summary
-    }
-
-    const summary = await generateArticleSummary(videoTitle, subtitlesContext, providerConfig)
-    if (!summary) {
-      return ""
-    }
-
-    await db.articleSummaryCache.put({
-      key: cacheKey,
-      summary,
-      createdAt: new Date(),
-    })
-
-    logger.info("Generated and cached new summary")
-    return summary
-  }
-
-  try {
-    const summary = await requestQueue.enqueue(thunk, Date.now(), cacheKey)
-    return summary || null
-  }
-  catch (error) {
-    logger.warn("Failed to get/generate summary:", error)
-    return null
-  }
 }
 
 export interface TranslateBatchData<TContext = unknown> {
@@ -184,12 +79,10 @@ async function createTranslationQueues<TContext>(config: TranslationQueueSetupCo
     },
     getCharacters: data => data.text.length,
     executeBatch: async (dataList) => {
-      const { providerConfig } = dataList[0]
       const hash = Sha256Hex(...dataList.map(d => d.hash))
       const earliestScheduleAt = Math.min(...dataList.map(d => d.scheduleAt))
 
       const batchThunk = async (): Promise<string[]> => {
-        await putBatchRequestRecord({ originalRequestCount: dataList.length, providerConfig })
         return await executeBatchTranslation(dataList, promptResolver)
       }
 
@@ -198,7 +91,6 @@ async function createTranslationQueues<TContext>(config: TranslationQueueSetupCo
     executeIndividual: async (data) => {
       const { text, langConfig, providerConfig, hash, scheduleAt, context } = data
       const thunk = async () => {
-        await putBatchRequestRecord({ originalRequestCount: 1, providerConfig })
         return executeTranslate(text, langConfig, providerConfig, promptResolver, { context })
       }
       return requestQueue.enqueue(thunk, scheduleAt, hash)
@@ -227,9 +119,8 @@ export async function setUpWebPageTranslationQueue() {
   })
 
   onMessage("enqueueTranslateRequest", async (message) => {
-    const { data: { text, langConfig, providerConfig, scheduleAt, hash, webTitle, webContent, webSummary } } = message
+    const { data: { text, langConfig, providerConfig, scheduleAt, hash } } = message
 
-    // Check cache first
     if (hash) {
       const cached = await db.translationCache.get(hash)
       if (cached) {
@@ -237,44 +128,25 @@ export async function setUpWebPageTranslationQueue() {
       }
     }
 
-    let result = ""
-    const context: WebPagePromptContext = {
-      webTitle: normalizePromptContextValue(webTitle),
-      webContent: normalizePromptContextValue(webContent),
-      webSummary: normalizePromptContextValue(webSummary),
-    }
+    const result = shouldUseBatchQueue(providerConfig)
+      ? await batchQueue.enqueue({ text, langConfig, providerConfig, hash, scheduleAt })
+      : await requestQueue.enqueue(
+          () => executeTranslate(text, langConfig, providerConfig, getTranslatePrompt),
+          scheduleAt,
+          hash,
+        )
 
-    if (shouldUseBatchQueue(providerConfig)) {
-      const data = { text, langConfig, providerConfig, hash, scheduleAt, context }
-      result = await batchQueue.enqueue(data)
-    }
-    else {
-      // Create thunk based on type and params
-      const thunk = () => executeTranslate(text, langConfig, providerConfig, getTranslatePrompt)
-      result = await requestQueue.enqueue(thunk, scheduleAt, hash)
-    }
-
-    // Cache the translation result if successful
     if (result && hash) {
-      result = normalizeTranslationOutput(providerConfig, result)
+      const normalized = normalizeTranslationOutput(providerConfig, result)
       await db.translationCache.put({
         key: hash,
-        translation: result,
+        translation: normalized,
         createdAt: new Date(),
       })
+      return normalized
     }
 
     return result
-  })
-
-  onMessage("getOrGenerateWebPageSummary", async (message) => {
-    const { webTitle, webContent, providerConfig } = message.data
-
-    if (!isLLMProviderConfig(providerConfig) || !webTitle || !webContent) {
-      return null
-    }
-
-    return await getOrGenerateWebPageSummary(webTitle, webContent, providerConfig, requestQueue)
   })
 
   onMessage("setTranslateRequestQueueConfig", (message) => {
@@ -336,16 +208,6 @@ export async function setUpSubtitlesTranslationQueue() {
     }
 
     return result
-  })
-
-  onMessage("getSubtitlesSummary", async (message) => {
-    const { videoTitle, subtitlesContext, providerConfig } = message.data
-
-    if (!isLLMProviderConfig(providerConfig) || !videoTitle || !subtitlesContext) {
-      return null
-    }
-
-    return await getOrGenerateSubtitleSummary(videoTitle, subtitlesContext, providerConfig, requestQueue)
   })
 
   onMessage("microsoftBatchTranslate", async (message) => {

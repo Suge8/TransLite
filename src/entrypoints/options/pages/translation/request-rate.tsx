@@ -15,17 +15,7 @@ type KeyOfRequestQueueConfig = keyof RequestQueueConfig
 
 export function RequestRate() {
   return (
-    <ConfigCard
-      id="request-rate"
-      title={i18n.t("options.translation.requestQueueConfig.title")}
-      description={(
-        <div>
-          {i18n.t("options.translation.requestQueueConfig.firstOnDescription")}
-          <a target="_blank" rel="noopener noreferrer" href="https://en.wikipedia.org/wiki/Token_bucket" aria-label="Learn more about the Token Bucket algorithm on Wikipedia"> Token Bucket </a>
-          {i18n.t("options.translation.requestQueueConfig.lastOnDescription")}
-        </div>
-      )}
-    >
+    <ConfigCard id="request-rate" title={i18n.t("options.translation.requestQueueConfig.title")}>
       <FieldGroup>
         <TranslateNumberSelector property="capacity" />
         <TranslateNumberSelector property="rate" />

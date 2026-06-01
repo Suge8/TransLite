@@ -20,7 +20,6 @@ import {
 } from "./constants"
 
 export * from "./constants"
-export * from "./provider-specific-settings"
 export * from "./schemas"
 
 export function isTranslateProviderConfig(config: ProviderConfig): config is TranslateProviderConfig {

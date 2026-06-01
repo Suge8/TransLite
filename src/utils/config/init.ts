@@ -5,7 +5,6 @@ import { configSchema } from "@/types/config/config"
 import { isAPIProviderConfig } from "@/types/config/provider"
 import { CONFIG_SCHEMA_VERSION, CONFIG_STORAGE_KEY, DEFAULT_CONFIG } from "../constants/config"
 import { logger } from "../logger"
-import { runMigration } from "./migration"
 
 /**
  * Initialize the config, this function should only be called once in the background script
@@ -17,52 +16,24 @@ export async function initializeConfig() {
     storage.getMeta<ConfigMeta>(`local:${CONFIG_STORAGE_KEY}`),
   ])
 
-  let config: Config
-  let currentVersion: number
-  let didConfigChange = false
+  const parsedConfig = storedConfig ? configSchema.safeParse(storedConfig) : null
+  const hasCurrentSchema = configMeta?.schemaVersion === undefined || configMeta.schemaVersion === CONFIG_SCHEMA_VERSION
 
-  if (!storedConfig) {
-    config = DEFAULT_CONFIG
-    currentVersion = CONFIG_SCHEMA_VERSION
-    didConfigChange = true
-  }
-  else {
-    config = storedConfig
-    currentVersion = configMeta?.schemaVersion ?? 1
-  }
+  let config = parsedConfig?.success && hasCurrentSchema ? parsedConfig.data : DEFAULT_CONFIG
+  let didConfigChange = !parsedConfig?.success || !hasCurrentSchema
 
-  while (currentVersion < CONFIG_SCHEMA_VERSION) {
-    const nextVersion = currentVersion + 1
-    try {
-      config = await runMigration(nextVersion, config)
-      didConfigChange = true
-      currentVersion = nextVersion
-    }
-    catch (error) {
-      console.error(`Migration to version ${nextVersion} failed:`, error)
-      currentVersion = nextVersion
-    }
-  }
-
-  if (!configSchema.safeParse(config).success) {
+  if (storedConfig && !parsedConfig?.success) {
     logger.warn("Config is invalid, using default config")
-    config = DEFAULT_CONFIG
-    currentVersion = CONFIG_SCHEMA_VERSION
-    didConfigChange = true
   }
 
   if (import.meta.env.DEV) {
     const apiKeyResult = applyAPIKeysFromEnv(config)
     config = apiKeyResult.config
     didConfigChange = didConfigChange || apiKeyResult.changed
-
-    const betaResult = applyDevBetaExperience(config)
-    config = betaResult.config
-    didConfigChange = didConfigChange || betaResult.changed
   }
 
   const didMetaNeedUpdate
-    = configMeta?.schemaVersion !== currentVersion
+    = configMeta?.schemaVersion !== CONFIG_SCHEMA_VERSION
       || configMeta?.lastModifiedAt === undefined
 
   if (didConfigChange) {
@@ -71,7 +42,7 @@ export async function initializeConfig() {
 
   if (didConfigChange || didMetaNeedUpdate) {
     await storage.setMeta<ConfigMeta>(`local:${CONFIG_STORAGE_KEY}`, {
-      schemaVersion: currentVersion,
+      schemaVersion: CONFIG_SCHEMA_VERSION,
       lastModifiedAt: configMeta?.lastModifiedAt ?? Date.now(),
     })
   }
@@ -106,23 +77,6 @@ function applyAPIKeysFromEnv(config: Config): { config: Config, changed: boolean
     config: {
       ...config,
       providersConfig,
-    },
-    changed: true,
-  }
-}
-
-function applyDevBetaExperience(config: Config): { config: Config, changed: boolean } {
-  if (config.betaExperience.enabled) {
-    return { config, changed: false }
-  }
-
-  return {
-    config: {
-      ...config,
-      betaExperience: {
-        ...config.betaExperience,
-        enabled: true,
-      },
     },
     changed: true,
   }

@@ -25,7 +25,10 @@ export async function setLocalConfig(config: Config) {
     throw new Error("Config is invalid")
   }
   await storage.setItem<Config>(`local:${CONFIG_STORAGE_KEY}`, parsedConfig.data)
-  await storage.setMeta<Partial<ConfigMeta>>(`local:${CONFIG_STORAGE_KEY}`, { lastModifiedAt: Date.now() })
+  await storage.setMeta<ConfigMeta>(`local:${CONFIG_STORAGE_KEY}`, {
+    schemaVersion: CONFIG_SCHEMA_VERSION,
+    lastModifiedAt: Date.now(),
+  })
 }
 
 export async function getLocalConfigAndMeta(): Promise<ConfigValueAndMeta> {
@@ -65,5 +68,8 @@ export async function setLocalConfigAndMeta(config: Config, meta: Partial<Config
     throw new Error("Config is invalid")
   }
   await storage.setItem<Config>(`local:${CONFIG_STORAGE_KEY}`, parsedConfig.data)
-  await storage.setMeta<Partial<ConfigMeta>>(`local:${CONFIG_STORAGE_KEY}`, { ...meta, lastModifiedAt })
+  await storage.setMeta<ConfigMeta>(`local:${CONFIG_STORAGE_KEY}`, {
+    schemaVersion: meta.schemaVersion ?? CONFIG_SCHEMA_VERSION,
+    lastModifiedAt,
+  })
 }

@@ -7,8 +7,6 @@ import { getProviderConfigById } from "../config/helpers"
 export const FEATURE_KEYS = [
   "translate",
   "videoSubtitles",
-  "selectionToolbar.translate",
-  "inputTranslation",
 ] as const
 
 export type FeatureKey = (typeof FEATURE_KEYS)[number]
@@ -20,34 +18,21 @@ export interface FeatureProviderDef {
 }
 
 export const FEATURE_PROVIDER_DEFS = {
-  "translate": {
+  translate: {
     isProvider: isTranslateProvider,
     getProviderId: (c: Config) => c.translate.providerId,
     configPath: ["translate", "providerId"],
   },
-  "videoSubtitles": {
+  videoSubtitles: {
     isProvider: isTranslateProvider,
     getProviderId: (c: Config) => c.videoSubtitles.providerId,
     configPath: ["videoSubtitles", "providerId"],
   },
-  "selectionToolbar.translate": {
-    isProvider: isTranslateProvider,
-    getProviderId: (c: Config) => c.selectionToolbar.features.translate.providerId,
-    configPath: ["selectionToolbar", "features", "translate", "providerId"],
-  },
-  "inputTranslation": {
-    isProvider: isTranslateProvider,
-    getProviderId: (c: Config) => c.inputTranslation.providerId,
-    configPath: ["inputTranslation", "providerId"],
-  },
 } as const satisfies Record<FeatureKey, FeatureProviderDef>
 
-/** Maps FeatureKey (with dots) to i18n-safe key (with underscores) for `options.general.featureProviders.features.*` */
 export const FEATURE_KEY_I18N_MAP = {
-  "translate": "translate",
-  "videoSubtitles": "videoSubtitles",
-  "selectionToolbar.translate": "selectionToolbar_translate",
-  "inputTranslation": "inputTranslation",
+  translate: "translate",
+  videoSubtitles: "videoSubtitles",
 } as const satisfies Record<FeatureKey, string>
 
 export type FeatureLabelI18nKey = `options.general.featureProviders.features.${(typeof FEATURE_KEY_I18N_MAP)[FeatureKey]}`
@@ -74,11 +59,6 @@ export function resolveProviderConfigOrNull(
   return getProviderConfigById(config.providersConfig, providerId) ?? null
 }
 
-/**
- * Convert a feature→providerId mapping into a Partial<Config> using FEATURE_PROVIDER_DEFS.configPath.
- * Generic — works for any scenario that assigns provider IDs to features.
- */
-
 export function buildFeatureProviderPatch(
   assignments: Partial<Record<FeatureKey, string>>,
 ): Partial<Config> {
@@ -90,7 +70,6 @@ export function buildFeatureProviderPatch(
       continue
 
     const def = FEATURE_PROVIDER_DEFS[key]
-
     const fragment: Record<string, unknown> = {}
     let current: Record<string, unknown> = fragment
     for (let i = 0; i < def.configPath.length - 1; i++) {

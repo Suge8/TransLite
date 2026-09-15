@@ -1,6 +1,6 @@
 name: TransLite
 extName: TransLite - Web & Subtitle Translator
-extDescription: Lightweight web page and YouTube subtitle translation, powered by Google, DeepSeek, OpenAI, DeepL, and more.
+extDescription: Lightweight web page translation powered by Google, DeepSeek, OpenAI, DeepL, and more.
 popup:
   tagline: Instant web & subtitle translation
   autoLang: Auto

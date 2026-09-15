@@ -1,6 +1,6 @@
 name: TransLite
 extName: TransLite - 网页与字幕翻译
-extDescription: 轻量网页与 YouTube 字幕翻译，支持谷歌、DeepSeek、OpenAI、DeepL 等多种翻译服务。
+extDescription: 轻量的网页翻译，支持谷歌、DeepSeek、OpenAI、DeepL 等多种服务。
 popup:
   tagline: 网页 · 字幕 即时翻译
   autoLang: 自动检测
